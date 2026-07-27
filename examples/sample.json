@@ -1,0 +1,12 @@
+{
+  "input": "replace-with-input.png",
+  "output": "redacted.png",
+  "rectangles": [
+    {
+      "left": 10,
+      "top": 10,
+      "right": 50,
+      "bottom": 30
+    }
+  ]
+}
