@@ -6,7 +6,9 @@
       "left": 10,
       "top": 10,
       "right": 50,
-      "bottom": 30
+      "bottom": 30,
+      "reason": "account identifier",
+      "origin": "manual"
     }
   ]
 }
