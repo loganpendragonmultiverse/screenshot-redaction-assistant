@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from itertools import pairwise
 from typing import Any
 
 
@@ -57,7 +58,7 @@ def expand_recipe(job: dict[str, Any], width: int, height: int) -> list[dict[str
 def union_pixels(rectangles: list[dict[str, Any]]) -> int:
     xs = sorted({r[k] for r in rectangles for k in ("left", "right")})
     total = 0
-    for left, right in zip(xs, xs[1:]):
+    for left, right in pairwise(xs):
         spans = sorted(
             (r["top"], r["bottom"]) for r in rectangles if r["left"] < right and r["right"] > left
         )
