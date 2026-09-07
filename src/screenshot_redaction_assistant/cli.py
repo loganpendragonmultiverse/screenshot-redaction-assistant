@@ -31,8 +31,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--preview-dir", type=Path)
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     parser.add_argument("--output", type=Path, help="write the audit report")
+    parser.add_argument(
+        "--editor", type=Path, help="Write a local HTML editor for one job, without final output"
+    )
+    parser.add_argument("--metadata-review", action="store_true")
     args = parser.parse_args(argv)
     try:
+        if args.output and args.output.exists():
+            raise ValueError("report already exists")
         recipe = json.loads(args.recipe.read_text(encoding="utf-8")) if args.recipe else {}
         if args.input_dir or args.output_dir:
             if not args.input_dir or not args.output_dir:
@@ -49,6 +55,18 @@ def main(argv: list[str] | None = None) -> int:
         else:
             raise ValueError("provide a specification or an input and output directory")
         jobs = build_jobs(data, ocr=args.suggest_ocr)
+        if args.editor:
+            from .editor import render_editor
+
+            if len(jobs) != 1 or args.editor.exists() or args.preview_dir or args.review:
+                raise ValueError(
+                    "editor requires one job and a new HTML path, without CLI review/preview"
+                )
+            args.editor.write_text(render_editor(jobs[0]), encoding="utf-8")
+            print(f"Wrote local editor: {args.editor}; it contains the original image")
+            return 0
+        for job in jobs:
+            job["metadata_review"] = args.metadata_review
         if args.review:
             for job in jobs:
                 job["rectangles"] = review_rectangles(job["rectangles"])

@@ -7,6 +7,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .recipes import expand_recipe, union_pixels
+
 PROJECT = "screenshot-redaction-assistant"
 VERSION = 2
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
@@ -120,7 +122,14 @@ def build_jobs(data: dict[str, Any], ocr: bool = False) -> list[dict[str, Any]]:
             raise TypeError("each job must be an object")
         job = {**recipe, **raw}
         source = Path(_require(job, "input")).resolve()
-        rectangles = list(job.get("rectangles", []))
+        from PIL import Image
+
+        if "normalized_rectangles" in job:
+            with Image.open(source) as opened:
+                rectangles = expand_recipe(job, opened.width, opened.height)
+            job.pop("normalized_rectangles", None)
+        else:
+            rectangles = list(job.get("rectangles", []))
         if ocr:
             rectangles.extend(suggest_ocr(source))
         job["rectangles"] = rectangles
@@ -236,18 +245,37 @@ def _redact(job: dict[str, Any]) -> dict[str, Any]:
         draw = ImageDraw.Draw(image)
         for rectangle in rectangles:
             draw.rectangle(
-                tuple(rectangle[key] for key in ("left", "top", "right", "bottom")), fill=color
+                (
+                    rectangle["left"],
+                    rectangle["top"],
+                    rectangle["right"] - 1,
+                    rectangle["bottom"] - 1,
+                ),
+                fill=color,
             )
         output.parent.mkdir(parents=True, exist_ok=True)
+        # Fresh pixel-only image drops inherited EXIF, ICC, comments and other metadata.
+        image = Image.frombytes("RGB", image.size, image.tobytes())
         image.save(output, format="PNG")
+    metadata_review: dict[str, Any] = {"status": "not-requested"}
+    if job.get("metadata_review"):
+        with Image.open(output) as checked:
+            metadata_review = {
+                "status": "completed",
+                "field_names": sorted(checked.info),
+                "exif_field_count": len(checked.getexif()),
+            }
     return {
+        "metadata_review": metadata_review,
         "input": str(source),
         "output": str(output),
         "width": image.width,
         "height": image.height,
         "color": list(color),
         "rectangles": rectangles,
-        "redacted_pixels_total": sum(item["pixels"] for item in rectangles),
+        "redacted_pixels_total": union_pixels(rectangles),
+        "rectangle_pixels_sum": sum(item["pixels"] for item in rectangles),
+        "coverage_fraction": union_pixels(rectangles) / (image.width * image.height),
         "input_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "output_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
         "flattened": True,

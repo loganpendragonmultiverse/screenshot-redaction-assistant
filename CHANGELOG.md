@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.0 - 2026-09-07
+
+- Add a local canvas editor with distinct original/preview/final states, guarded normalized recipes, exact union coverage and optional output metadata review.
+- Added regression coverage for the audited behavior and invalid inputs.
+
 ## 1.1.0 - 2026-08-03
 
 - Added explicit multi-job and recursive directory batches with reusable rectangle and color recipes.
