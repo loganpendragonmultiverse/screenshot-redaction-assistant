@@ -36,3 +36,13 @@ python -m build
 ```
 
 Python 3.10 or newer is supported on Windows, macOS, and Linux. Part of the [Logan Pendragon Forge open-source collection](https://www.loganpendragonforge.com/open-source/). Licensed under the [MIT License](LICENSE).
+
+## Version 1.2.0: reviewed improvements
+
+Add a local canvas editor with distinct original/preview/final states, guarded normalized recipes, exact union coverage and optional output metadata review.
+
+```bash
+redact-screenshot job.json --editor review.html
+```
+
+--editor writes a local HTML editor for one job (maximum 16 million pixels), without creating a final output. Draw, move or resize rectangles, edit numeric bounds, and explicitly accept or remove every rectangle before downloading a flattened final PNG or normalized recipe. The HTML embeds the original image and must not be shared as a redacted result. Recipes use reference_size [width,height], normalized_rectangles with finite 0..1 exclusive bounds, and allow_scale false by default; scaling requires explicit true and matching aspect ratio, with bounds rounded outward. Overlapping redacted_pixels_total now counts the pixel union and drawing follows exclusive right/bottom bounds. --metadata-review reports output metadata field names and EXIF counts without values; CLI final PNGs are rebuilt from fresh RGB pixels. Existing source/output protections and opt-in OCR suggestions remain.
