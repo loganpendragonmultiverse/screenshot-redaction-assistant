@@ -38,6 +38,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--metadata-review", action="store_true")
     args = parser.parse_args(argv)
     try:
+        if args.suggest_ocr and not (args.review or args.editor):
+            raise ValueError(
+                "--suggest-ocr requires --review or --editor; candidates must be reviewed"
+            )
         if args.output and args.output.exists():
             raise ValueError("report already exists")
         recipe = json.loads(args.recipe.read_text(encoding="utf-8")) if args.recipe else {}
@@ -91,6 +95,11 @@ def main(argv: list[str] | None = None) -> int:
                 sys.stdout.flush()
 
             write_new_outputs(outputs, deliver)
+    except EOFError:
+        print(
+            "error: review ended before completion; complete the review and retry", file=sys.stderr
+        )
+        return 2
     except (OSError, UnicodeError, TypeError, ValueError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

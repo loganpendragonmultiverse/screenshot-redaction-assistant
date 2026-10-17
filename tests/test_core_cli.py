@@ -150,11 +150,13 @@ def test_cli_batch_and_report_output(tmp_path: Path, capsys: pytest.CaptureFixtu
     assert "provide a specification" in capsys.readouterr().err
 
 
-def test_build_jobs_recipe_and_invalid_review() -> None:
+def test_build_jobs_recipe_and_invalid_review(tmp_path: Path) -> None:
+    source = tmp_path / "a.png"
+    Image.new("RGB", (10, 10), "white").save(source)
     jobs = build_jobs(
         {
             "recipe": {"color": [1, 2, 3]},
-            "jobs": [{"input": "a.png", "output": "b.png", "rectangles": [{}]}],
+            "jobs": [{"input": str(source), "output": "b.png", "rectangles": [{}]}],
         }
     )
     assert jobs[0]["color"] == [1, 2, 3]

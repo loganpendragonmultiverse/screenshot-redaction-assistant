@@ -8,7 +8,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from .output import write_new_outputs
 from .recipes import expand_recipe, union_pixels
@@ -24,9 +24,32 @@ DEFAULT_OCR_PATTERNS = {
 }
 
 
-def _opaque_image(opened: Image.Image) -> Image.Image:
+DISPLAY_COORDINATES = "exif-display-v1"
+RAW_COORDINATES = "raw-v1"
+
+
+def _coordinate_space(job: dict[str, Any], opened: Image.Image) -> str:
+    policy = job.get("coordinate_space", DISPLAY_COORDINATES)
+    if policy not in (DISPLAY_COORDINATES, RAW_COORDINATES):
+        raise ValueError("coordinate_space must be exif-display-v1 or raw-v1")
+    if (
+        "coordinate_space" not in job
+        and opened.getexif().get(274, 1) in range(2, 9)
+        and (job.get("rectangles") or job.get("normalized_rectangles"))
+    ):
+        raise ValueError(
+            "Oriented image with unmarked rectangle coordinates: choose coordinate_space "
+            "raw-v1 for an existing raw recipe, or exif-display-v1 after reviewing displayed bounds"
+        )
+    return str(policy)
+
+
+def _opaque_image(opened: Image.Image, coordinate_space: str = DISPLAY_COORDINATES) -> Image.Image:
     """Preserve visible pixels by compositing transparency over an explicit white matte."""
-    rgba = opened.convert("RGBA")
+    oriented = (
+        ImageOps.exif_transpose(opened) if coordinate_space == DISPLAY_COORDINATES else opened
+    )
+    rgba = oriented.convert("RGBA")
     matte = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
     composite = Image.alpha_composite(matte, rgba).convert("RGB")
     return Image.frombytes("RGB", composite.size, composite.tobytes())
@@ -105,7 +128,9 @@ def _ocr_candidates(
     return suggestions
 
 
-def suggest_ocr(source: Path) -> list[dict[str, Any]]:  # pragma: no cover - optional native adapter
+def suggest_ocr(
+    source: Path, coordinate_space: str = DISPLAY_COORDINATES
+) -> list[dict[str, Any]]:  # pragma: no cover - optional native adapter
     try:
         import pytesseract  # type: ignore[import-not-found]
         from PIL import Image
@@ -115,7 +140,9 @@ def suggest_ocr(source: Path) -> list[dict[str, Any]]:  # pragma: no cover - opt
         ) from exc
     with Image.open(source) as image:
         try:
-            data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
+            data = pytesseract.image_to_data(
+                _opaque_image(image, coordinate_space), output_type=pytesseract.Output.DICT
+            )
         except Exception as exc:
             raise ValueError(f"local OCR failed: {exc}") from exc
     return _ocr_candidates(data)
@@ -138,14 +165,13 @@ def build_jobs(data: dict[str, Any], ocr: bool = False) -> list[dict[str, Any]]:
         source = Path(_require(job, "input")).resolve()
         from PIL import Image
 
-        if "normalized_rectangles" in job:
-            with Image.open(source) as opened:
-                rectangles = expand_recipe(job, opened.width, opened.height)
-            job.pop("normalized_rectangles", None)
-        else:
-            rectangles = list(job.get("rectangles", []))
+        with Image.open(source) as opened:
+            job["coordinate_space"] = _coordinate_space(job, opened)
+            image = _opaque_image(opened, job["coordinate_space"])
+            rectangles = expand_recipe(job, image.width, image.height)
+        job.pop("normalized_rectangles", None)
         if ocr:
-            rectangles.extend(suggest_ocr(source))
+            rectangles.extend(suggest_ocr(source, job["coordinate_space"]))
         job["rectangles"] = rectangles
         jobs.append(job)
     return jobs
@@ -221,7 +247,7 @@ def prepare_preview(job: dict[str, Any], target: Path) -> tuple[dict[str, Any], 
     if target.exists():
         raise ValueError(f"preview already exists: {target}")
     with Image.open(source) as opened:
-        image = _opaque_image(opened)
+        image = _opaque_image(opened, _coordinate_space(job, opened))
         draw = ImageDraw.Draw(image)
         rectangles = [
             _rectangle(item, image.width, image.height, index)
@@ -257,9 +283,18 @@ def _prepare_redaction(job: dict[str, Any]) -> tuple[dict[str, Any], bytes]:
     output = Path(_require(job, "output")).absolute()
     if output.exists():
         raise ValueError(f"output already exists: {output}")
+    if (
+        any(
+            r.get("origin") == "ocr-suggestion"
+            for r in job.get("rectangles", [])
+            if isinstance(r, dict)
+        )
+        and job.get("reviewed") is not True
+    ):
+        raise ValueError("OCR candidates require explicit review before final output")
     color = _color(job.get("color", [0, 0, 0]))
     with Image.open(source) as opened:
-        image = _opaque_image(opened)
+        image = _opaque_image(opened, _coordinate_space(job, opened))
         rectangles = [
             _rectangle(item, image.width, image.height, index)
             for index, item in enumerate(_require(job, "rectangles"), 1)
@@ -290,6 +325,7 @@ def _prepare_redaction(job: dict[str, Any]) -> tuple[dict[str, Any], bytes]:
                 "exif_field_count": len(checked.getexif()),
             }
     return {
+        "coordinate_space": _coordinate_space(job, opened),
         "metadata_review": metadata_review,
         "transparency_matte": [255, 255, 255],
         "input": str(source),
