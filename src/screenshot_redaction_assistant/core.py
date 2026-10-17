@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from .output import write_new_outputs
 from .recipes import expand_recipe, union_pixels
 
 PROJECT = "screenshot-redaction-assistant"
@@ -201,11 +203,11 @@ def review_rectangles(
     return reviewed
 
 
-def write_preview(job: dict[str, Any], target: Path) -> dict[str, Any]:
+def prepare_preview(job: dict[str, Any], target: Path) -> tuple[dict[str, Any], bytes]:
     from PIL import Image, ImageDraw
 
     source = Path(_require(job, "input")).resolve()
-    target = target.resolve()
+    target = target.absolute()
     if target.exists():
         raise ValueError(f"preview already exists: {target}")
     with Image.open(source) as opened:
@@ -222,19 +224,27 @@ def write_preview(job: dict[str, Any], target: Path) -> dict[str, Any]:
                 (rectangle["left"] + 2, rectangle["top"] + 2), rectangle["id"], fill=(255, 0, 0)
             )
         target.parent.mkdir(parents=True, exist_ok=True)
-        image.save(target, format="PNG")
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        pixels = buffer.getvalue()
     return {
         "preview": str(target),
-        "preview_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+        "preview_sha256": hashlib.sha256(pixels).hexdigest(),
         "rectangles": len(rectangles),
-    }
+    }, pixels
 
 
-def _redact(job: dict[str, Any]) -> dict[str, Any]:
+def write_preview(job: dict[str, Any], target: Path) -> dict[str, Any]:
+    report, pixels = prepare_preview(job, target)
+    write_new_outputs([(target, pixels)])
+    return report
+
+
+def _prepare_redaction(job: dict[str, Any]) -> tuple[dict[str, Any], bytes]:
     from PIL import Image, ImageDraw
 
     source = Path(_require(job, "input")).resolve()
-    output = Path(_require(job, "output")).resolve()
+    output = Path(_require(job, "output")).absolute()
     if output.exists():
         raise ValueError(f"output already exists: {output}")
     color = _color(job.get("color", [0, 0, 0]))
@@ -258,10 +268,12 @@ def _redact(job: dict[str, Any]) -> dict[str, Any]:
         output.parent.mkdir(parents=True, exist_ok=True)
         # Fresh pixel-only image drops inherited EXIF, ICC, comments and other metadata.
         image = Image.frombytes("RGB", image.size, image.tobytes())
-        image.save(output, format="PNG")
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        pixels = buffer.getvalue()
     metadata_review: dict[str, Any] = {"status": "not-requested"}
     if job.get("metadata_review"):
-        with Image.open(output) as checked:
+        with Image.open(io.BytesIO(pixels)) as checked:
             metadata_review = {
                 "status": "completed",
                 "field_names": sorted(checked.info),
@@ -279,14 +291,15 @@ def _redact(job: dict[str, Any]) -> dict[str, Any]:
         "rectangle_pixels_sum": sum(item["pixels"] for item in rectangles),
         "coverage_fraction": union_pixels(rectangles) / (image.width * image.height),
         "input_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
-        "output_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+        "output_sha256": hashlib.sha256(pixels).hexdigest(),
         "flattened": True,
         "reviewed": bool(job.get("reviewed", False)),
-    }
+    }, pixels
 
 
-def analyze(data: dict[str, Any]) -> dict[str, Any]:
-    results = [_redact(job) for job in build_jobs(data)]
+def prepare_outputs(data: dict[str, Any]) -> tuple[dict[str, Any], list[tuple[Path, bytes]]]:
+    prepared = [_prepare_redaction(job) for job in build_jobs(data)]
+    results = [report for report, _ in prepared]
     return {
         "schema_version": VERSION,
         "project": PROJECT,
@@ -294,7 +307,13 @@ def analyze(data: dict[str, Any]) -> dict[str, Any]:
         "results": results,
         "all_flattened": all(item["flattened"] for item in results),
         "review_required": True,
-    }
+    }, [(Path(report["output"]), pixels) for report, pixels in prepared]
+
+
+def analyze(data: dict[str, Any]) -> dict[str, Any]:
+    report, outputs = prepare_outputs(data)
+    write_new_outputs(outputs)
+    return report
 
 
 def render_json(report: dict[str, Any]) -> str:

@@ -1,9 +1,5 @@
 # Screenshot Redaction Assistant
 
-> ⭐ **Gold Star Project**
-> I consider this project complete. Fixes, maintenance and good new ideas are still welcome.
-> [About Gold Stars](https://www.loganpendragonforge.com/open-source/?gold=1)
->
 > Cover private details in screenshots, review each redaction and save a flattened image.
 
 ## What you can do
@@ -13,7 +9,11 @@
 - Export the final image only after every rectangle has been accepted.
 
 
-## Current release 1.3.0
+## Current release 1.3.1
+
+Batch images, previews and audit reports are staged together. Ordinary write or delivery failures remove only unchanged files created by the command, so a corrected destination can be retried. Existing files, dangling symlinks and concurrent replacements are preserved. Empty output directories may remain; this is not a power-loss transaction.
+
+## Review drafts in 1.3.0
 
 Save and restore unfinished local rectangle reviews without treating drafts as redacted deliverables.
 

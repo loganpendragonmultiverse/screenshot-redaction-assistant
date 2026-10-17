@@ -7,14 +7,15 @@ from pathlib import Path
 from typing import Any
 
 from .core import (
-    analyze,
     build_jobs,
     directory_jobs,
+    prepare_outputs,
+    prepare_preview,
     render_json,
     render_markdown,
     review_rectangles,
-    write_preview,
 )
+from .output import write_new_outputs
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -62,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise ValueError(
                     "editor requires one job and a new HTML path, without CLI review/preview"
                 )
-            args.editor.write_text(render_editor(jobs[0]), encoding="utf-8")
+            write_new_outputs([(args.editor, render_editor(jobs[0]).encode("utf-8"))])
             print(f"Wrote local editor: {args.editor}; it contains the original image")
             return 0
         for job in jobs:
@@ -71,17 +72,25 @@ def main(argv: list[str] | None = None) -> int:
             for job in jobs:
                 job["rectangles"] = review_rectangles(job["rectangles"])
                 job["reviewed"] = True
+        previews: list[tuple[Path, bytes]] = []
         if args.preview_dir:
             for index, job in enumerate(jobs, 1):
-                write_preview(job, args.preview_dir / f"preview-{index}.png")
-        report = analyze({"jobs": jobs})
+                target = args.preview_dir / f"preview-{index}.png"
+                _, pixels = prepare_preview(job, target)
+                previews.append((target, pixels))
+        report, outputs = prepare_outputs({"jobs": jobs})
+        outputs = previews + outputs
         rendered = render_json(report) if args.format == "json" else render_markdown(report)
         if args.output:
-            if args.output.exists():
-                raise ValueError(f"report already exists: {args.output}")
-            args.output.write_text(rendered, encoding="utf-8")
+            outputs.append((args.output, rendered.encode("utf-8")))
+            write_new_outputs(outputs)
         else:
-            sys.stdout.write(rendered)
+
+            def deliver() -> None:
+                sys.stdout.write(rendered)
+                sys.stdout.flush()
+
+            write_new_outputs(outputs, deliver)
     except (OSError, UnicodeError, TypeError, ValueError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

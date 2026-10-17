@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1
+
+- Stage and exclusively reserve all batch images, previews and audit outputs.
+- Recover ordinary failed exports without deleting existing or concurrently changed files, enabling safe retry after correcting a destination.
+- Preserve source images, flattened pixel-only output, metadata review and local editor behavior.
+
 ## 1.3.0 - 2026-10-17
 
 - Reject fractional, boolean and string pixel bounds rather than silently coercing them.
