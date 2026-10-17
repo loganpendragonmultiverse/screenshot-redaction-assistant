@@ -1,5 +1,11 @@
 # Screenshot Redaction Assistant
 
+> ⭐ **Gold Star Project — finished for its intended scope.**
+> Scope reviewed for **v1.3.0** on **2026-10-17**. Actively maintained; meaningful future development can reopen the scope.
+> [What Gold Star means](https://www.loganpendragonforge.com/open-source/gold-star/)
+>
+> Local manual screenshot redaction, explicit rectangle review, image-bound review drafts and flattened PNG export.
+
 ## Current release 1.3.0
 
 Save and restore unfinished local rectangle reviews without treating drafts as redacted deliverables.

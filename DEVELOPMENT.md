@@ -17,3 +17,11 @@ Local formatting, lint, strict types and regression tests pass. Public release c
 Save and restore unfinished local rectangle reviews without treating drafts as redacted deliverables.
 
 Generate an editor with `redact-screenshot job.json --editor review.html`. Save unfinished review draft works before all rectangles are accepted. Reopen an editor generated from the same exact source image, choose Restore review draft and continue reviewing. Drafts contain geometry, a source-file fingerprint and acceptance assertions; they contain no image pixels, but remain private and are never a redacted deliverable. A hash is identity evidence, not an authenticity signature: a deliberately edited draft can forge acceptance flags. Restoring a valid draft with unsaved changes requires explicit replacement confirmation. Imports are limited to 2 MiB/5,000 rectangles and reject unknown versions, wrong images, invalid bounds and non-boolean acceptance before changing state. Any source-byte change, even image metadata, requires a fresh review. No automatic browser storage or upload is added. Final PNG/recipe exports still require every rectangle accepted or removed.
+
+## Gold Star scope review — 2026-10-17
+
+Reviewed release: v1.3.0. Local manual screenshot redaction, explicit rectangle review, image-bound review drafts and flattened PNG export.
+
+The identified useful scope gaps have been implemented and verified. This review found no remaining meaningful contribution inside the documented purpose; optionality alone is not a reason to exclude a useful in-scope feature. Bugs, compatibility and dependency maintenance remain active work, and a meaningful new idea can reopen the scope. Gold status is bound to the reviewed release in the Forge catalog. Reassess or remove that status when a new gap is identified.
+
+Definition: https://www.loganpendragonforge.com/open-source/gold-star/
