@@ -1,10 +1,17 @@
 # Screenshot Redaction Assistant
 
-> ⭐ **Gold Star Project — finished for its intended scope.**
-> Scope reviewed for **v1.3.0** on **2026-10-17**. Actively maintained; meaningful future development can reopen the scope.
-> [What Gold Star means](https://www.loganpendragonforge.com/open-source/gold-star/)
+> ⭐ **Gold Star Project**
+> I consider this project complete. Fixes, maintenance and good new ideas are still welcome.
+> [About Gold Stars](https://www.loganpendragonforge.com/open-source/?gold=1)
 >
-> Local manual screenshot redaction, explicit rectangle review, image-bound review drafts and flattened PNG export.
+> Cover private details in screenshots, review each redaction and save a flattened image.
+
+## What you can do
+
+- Draw, move and resize redaction rectangles locally.
+- Save an unfinished review and reopen it with the matching source image.
+- Export the final image only after every rectangle has been accepted.
+
 
 ## Current release 1.3.0
 
@@ -49,7 +56,7 @@ python -m build
 
 Python 3.10 or newer is supported on Windows, macOS, and Linux. Part of the [Logan Pendragon Forge open-source collection](https://www.loganpendragonforge.com/open-source/). Licensed under the [MIT License](LICENSE).
 
-## Version 1.2.0: reviewed improvements
+## Updates in 1.2.0
 
 Add a local canvas editor with distinct original/preview/final states, guarded normalized recipes, exact union coverage and optional output metadata review.
 
