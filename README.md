@@ -1,5 +1,9 @@
 # Screenshot Redaction Assistant
 
+> ⭐ **Gold Star Project**
+> I consider this project complete. Fixes, maintenance and good new ideas are still welcome.
+> [About Gold Stars](https://www.loganpendragonforge.com/open-source/?gold=1)
+>
 > Cover private details in screenshots, review each redaction and save a flattened image.
 
 ## What you can do

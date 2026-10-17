@@ -20,4 +20,10 @@ Generate an editor with `redact-screenshot job.json --editor review.html`. Save 
 
 ## 1.3.1 output recovery
 
-Gold qualification is pending verified output recovery. Stage all PNGs, previews and the optional audit before reserving destination names exclusively. Roll back only unchanged files created by this command; preserve existing and concurrent files. Do not promise power-loss atomicity.
+Stage all PNGs, previews and the optional audit before reserving destination names exclusively. Roll back only unchanged files created by this command; preserve existing and concurrent files. Do not promise power-loss atomicity.
+
+## Gold Star requalification — October 17, 2026
+
+The published v1.3.1 closes the identified ordinary output-failure/retry gap within the original local screenshot review and flattened-export purpose. The exact tagged wheel passed all 41 regression/acceptance tests without skips, including non-admin image, preview and audit destination failures followed by retries. Protected platform CI and CodeQL passed on the reviewed PR and merged release commit. Fresh Chromium, Firefox and WebKit checks passed review-draft restore, pending-export guards, accepted PNG/recipe exports and decoded final pixels. Public wheel, source distribution and checksum assets match their verified digests.
+
+No identified meaningful feature remains unfinished within the documented purpose. OCR remains an optional suggestion requiring operator review; final images still require inspection. Maintenance, future compatibility and useful new ideas remain welcome. Output recovery covers ordinary errors and is not a power-loss transaction or a guarantee against hostile filesystem mutation.
