@@ -13,7 +13,7 @@ for(const [name,engine] of Object.entries({chromium,firefox,webkit})){
  assert.equal(data.coordinate_space,'exif-display-v1');
  let downloads=0;page.on('download',()=>downloads++);await page.click('#png');assert.equal(downloads,0);assert.match(await page.locator('#status').textContent(),/Accept or remove/);
  const draft={format:'screenshot-redaction-review-draft',version:1,source_sha256:data.source_sha256,reference_size:[20,40],selected_index:0,rectangles:[{left:1,top:2,right:5,bottom:6,accepted:true}]};
- const upload=async value=>{await page.locator('#draft-file').setInputFiles({name:'draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});};
+ const upload=async value=>{await page.locator('#draft-file').setInputFiles({name:'draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});await page.waitForFunction(()=>document.getElementById('draft-file').value==='');};
  await upload(draft);assert.match(await page.locator('#status').textContent(),/Legacy draft uses raw coordinates/);assert.match(await page.locator('#selection').textContent(),/pending/);
  await upload({...draft,version:2,coordinate_space:'raw-v1'});assert.match(await page.locator('#status').textContent(),/policy differs/);
  await page.click('#accept');const png=await save('#png',name+'-final.png');
