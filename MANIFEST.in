@@ -1,3 +1,4 @@
 include README.md LICENSE CHANGELOG.md CONTRIBUTING.md SECURITY.md SUPPORT.md CODE_OF_CONDUCT.md
 recursive-include examples *
 
+recursive-include tests *.py *.mjs

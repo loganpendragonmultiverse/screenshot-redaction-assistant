@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
+const {chromium,firefox,webkit}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+const dir=process.env.FIXTURE_DIR;
+const receipts=[];
+for(const [name,engine] of Object.entries({chromium,firefox,webkit})){
+ const browser=await engine.launch({headless:true}); const page=await browser.newPage({acceptDownloads:true});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+ const save=async(id,file)=>{const event=page.waitForEvent('download');await page.click(id);await(await event).saveAs(dir+'/'+file);return fs.readFile(dir+'/'+file);};
+ await page.goto('file://'+dir+'/screen-display3.html');await page.waitForFunction(()=>document.getElementById('canvas').width===20);
+ const data=await page.locator('#data').textContent().then(JSON.parse);
+ assert.equal(data.coordinate_space,'exif-display-v1');
+ let downloads=0;page.on('download',()=>downloads++);await page.click('#png');assert.equal(downloads,0);assert.match(await page.locator('#status').textContent(),/Accept or remove/);
+ const draft={format:'screenshot-redaction-review-draft',version:1,source_sha256:data.source_sha256,reference_size:[20,40],selected_index:0,rectangles:[{left:1,top:2,right:5,bottom:6,accepted:true}]};
+ const upload=async value=>{await page.locator('#draft-file').setInputFiles({name:'draft.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(value))});};
+ await upload(draft);assert.match(await page.locator('#status').textContent(),/Legacy draft uses raw coordinates/);assert.match(await page.locator('#selection').textContent(),/pending/);
+ await upload({...draft,version:2,coordinate_space:'raw-v1'});assert.match(await page.locator('#status').textContent(),/policy differs/);
+ await page.click('#accept');const png=await save('#png',name+'-final.png');
+ const audit=JSON.parse(await save('#audit',name+'-audit.json'));
+ assert.equal(audit.output_sha256,crypto.createHash('sha256').update(png).digest('hex'));assert.equal(audit.input_sha256,data.source_sha256);assert.equal(audit.redacted_pixels_total,16);assert.equal(audit.reviewed,true);assert.deepEqual(audit.color,[12,34,56]);assert.equal(audit.coordinate_space,'exif-display-v1');assert.ok(!('image' in audit));
+ const decoded=await page.evaluate(async({png,expected})=>{async function pixels(src){const img=new Image();img.src=src;await img.decode();const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);return [...ctx.getImageData(0,0,c.width,c.height).data];}return {actual:await pixels(png),expected:await pixels(expected)};},{png:'data:image/png;base64,'+png.toString('base64'),expected:'data:image/png;base64,'+(await fs.readFile(dir+'/screen-display3-cli.png')).toString('base64')});
+ assert.deepEqual(decoded.actual,decoded.expected,'browser and CLI final pixels must agree');
+ const recipe=JSON.parse(await save('#recipe',name+'-recipe.json'));assert.equal(recipe.coordinate_space,'exif-display-v1');assert.deepEqual(recipe.color,[12,34,56]);
+ const saved=JSON.parse(await save('#draft-save',name+'-draft.json'));assert.equal(saved.version,2);assert.equal(saved.coordinate_space,'exif-display-v1');
+ await page.evaluate(()=>{window.originalDigest=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=(...args)=>new Promise(resolve=>{window.releaseDigest=()=>window.originalDigest(...args).then(resolve);});});
+ const inflight=page.waitForEvent('download');await page.click('#png');await page.waitForFunction(()=>typeof window.releaseDigest==='function');await page.fill('#right','6');await page.click('#update');await page.evaluate(()=>window.releaseDigest());await(await inflight).saveAs(dir+'/'+name+'-earlier-state.png');assert.equal(await page.locator('#audit').isDisabled(),true);assert.match(await page.locator('#status').textContent(),/earlier accepted state/);await page.evaluate(()=>{crypto.subtle.digest=window.originalDigest;});
+ await page.fill('#right','6');await page.click('#update');assert.equal(await page.locator('#audit').isDisabled(),true);await page.click('#png');assert.match(await page.locator('#status').textContent(),/Accept or remove/);
+ await upload(saved);assert.match(await page.locator('#status').textContent(),/Review draft restored/);assert.match(await page.locator('#selection').textContent(),/accepted/);
+ await page.goto('file://'+dir+'/screen-raw3.html');await page.waitForFunction(()=>document.getElementById('canvas').width===20);await upload(draft);assert.match(await page.locator('#status').textContent(),/Review draft restored/);
+ await page.goto('file://'+dir+'/screen-display6.html');await page.waitForFunction(()=>document.getElementById('canvas').width===40);assert.deepEqual(await page.locator('#data').textContent().then(JSON.parse).then(x=>x.reference_size),[40,20]);
+ assert.deepEqual(errors,[]);receipts.push({browser:name,passed:true,checks:['pending PNG guard','same-size legacy orientation draft rejection','coordinate-policy mismatch rejection','explicit raw legacy restore','v2 draft roundtrip','PNG audit SHA/coverage/color','CLI/browser decoded pixel equality','recipe policy','edit invalidates audit','orientation6 displayed dimensions']});await browser.close();
+}
+await fs.writeFile(dir+'/SCREENSHOT-BROWSER.json',JSON.stringify(receipts,null,2));console.log(JSON.stringify(receipts));

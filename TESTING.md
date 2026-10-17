@@ -21,3 +21,21 @@ Verify multi-image validation, preview/image/report destination collisions, miss
 ## 1.3.2 alpha-safe flattening
 
 Composite RGBA and palette transparency against opaque white before rendering previews, final PNGs and browser editor pixels. Verify hidden RGB cannot become visible, partial alpha matches the documented matte, editor/CLI pixels agree, metadata is dropped and source bytes/fingerprints remain unchanged. Run source gates and actual tagged-wheel/browser acceptance before publishing.
+
+## 1.4.0 acceptance
+
+- Require terminal or browser review before applying OCR suggestions; interrupted terminal review leaves no outputs.
+- Use a shared EXIF display coordinate policy for image rendering, OCR, previews and recipes, with an explicit raw policy for legacy geometry and guarded version 1/2 draft imports.
+- Export a browser audit bound to the final PNG hash; keep configured fill colors in browser previews, exports and recipes.
+- Document audit privacy and add oriented-image, review-gate and three-browser regressions.
+
+Run the complete source gates and installed built-wheel tests. Run `tests/browser_fixtures.py` with the installed package and a fresh private output directory, then `tests/browser_acceptance.mjs` in Chromium, Firefox and WebKit. These fixtures are synthetic. Protected CI and independent exact-head review remain required before release.
+
+With Playwright and its three browser engines available, use:
+
+```bash
+python tests/browser_fixtures.py /tmp/fresh-browser-fixtures
+FIXTURE_DIR=/tmp/fresh-browser-fixtures node tests/browser_acceptance.mjs
+```
+
+For an external Playwright installation, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path. Browser JSON receipts and downloaded test artifacts stay in the fixture directory. Use a new directory for another run so output protection remains exercised. Apply exported recipes to their matching synthetic source and compare decoded PNG pixels.

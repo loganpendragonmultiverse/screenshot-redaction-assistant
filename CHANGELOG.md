@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+- Require terminal or browser review before applying OCR suggestions; interrupted terminal review leaves no outputs.
+- Use a shared EXIF display coordinate policy for image rendering, OCR, previews and recipes, with an explicit raw policy for legacy geometry and guarded version 1/2 draft imports.
+- Export a browser audit bound to the final PNG hash; keep configured fill colors in browser previews, exports and recipes.
+- Document audit privacy and add oriented-image, review-gate and three-browser regressions.
+
 ## 1.3.2
 
 - Composite transparent pixels against an explicit white matte before preview, redaction and browser review/export, preventing hidden RGB channels from becoming visible.

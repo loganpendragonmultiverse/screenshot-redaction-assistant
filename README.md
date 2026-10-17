@@ -13,7 +13,17 @@
 - Export the final image only after every rectangle has been accepted.
 
 
-## Current release 1.3.2
+## Current release 1.4.0
+
+OCR candidates require `--review` or `--editor`; `--suggest-ocr` alone stops before reading inputs or creating outputs. Terminal review supports keep, skip and correction; the browser starts every candidate pending.
+
+New reviews use `coordinate_space: "exif-display-v1"`: EXIF orientation is applied before rectangle validation, OCR, previews and final images. Pixel bounds and normalized recipes refer to that displayed image. Source bytes remain unchanged, and exports still drop metadata and use the opaque white transparency matte.
+
+For an oriented image with existing unmarked rectangles or recipes, choose explicitly: `"coordinate_space": "raw-v1"` preserves the old stored-pixel grid; `"coordinate_space": "exif-display-v1"` uses displayed bounds after you review them. This guard also covers orientations that keep the same dimensions. Do not simply add the display marker to an old raw recipe. New browser recipes carry their coordinate policy. Version 2 drafts bind both exact source bytes and that policy. Version 1 drafts can reopen unchanged for sources without orientation transforms, or in an explicitly generated raw-v1 editor; otherwise start a fresh review.
+
+After exporting a final browser PNG, download its audit sidecar with the exact encoded PNG SHA-256, source SHA-256, coordinate policy, dimensions, fill, accepted rectangles and union coverage. A later geometry/review change disables that audit button until a new PNG is exported. Browser fill now follows the job's configured color. Audit files can contain private paths and free-text reasons (CLI) or hashes and rectangle details (browser); review them before sharing. They contain no original image pixels.
+
+## Alpha-safe flattening in 1.3.2
 
 Transparent images are composited against an opaque white matte before CLI redaction, previews or browser review/export. Fully transparent RGB content stays invisible; partially transparent pixels preserve their appearance over white. Audit reports record `transparency_matte: [255, 255, 255]`. Source bytes and the source-bound draft fingerprint remain unchanged. Final images still require inspection.
 
@@ -39,7 +49,7 @@ redact-screenshot examples/sample.json --preview-dir previews --output audit.md
 redact-screenshot --input-dir screenshots --output-dir redacted --recipe examples/recipe.json --recursive --review
 ```
 
-Install `.[ocr]` plus a local Tesseract executable to use `--suggest-ocr`. OCR candidates are never silently applied: use `--review` to keep, skip, replace, or add rectangles. Preview images outline rectangles without flattening them; only final outputs permanently cover pixels.
+Install `.[ocr]` plus a local Tesseract executable to use `--suggest-ocr`. `--suggest-ocr` requires `--review` or `--editor`. Use `--review` to keep, skip, replace, or add rectangles. Preview images outline rectangles without flattening them; only final outputs permanently cover pixels.
 
 ## Batch and recipes
 
