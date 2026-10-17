@@ -8,6 +8,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from PIL import Image
+
 from .output import write_new_outputs
 from .recipes import expand_recipe, union_pixels
 
@@ -20,6 +22,14 @@ DEFAULT_OCR_PATTERNS = {
     "phone": re.compile(r"(?<!\w)(?:\+?\d[\d .()\-]{7,}\d)(?!\w)"),
     "token-like": re.compile(r"\b[A-Za-z0-9_-]{24,}\b"),
 }
+
+
+def _opaque_image(opened: Image.Image) -> Image.Image:
+    """Preserve visible pixels by compositing transparency over an explicit white matte."""
+    rgba = opened.convert("RGBA")
+    matte = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+    composite = Image.alpha_composite(matte, rgba).convert("RGB")
+    return Image.frombytes("RGB", composite.size, composite.tobytes())
 
 
 def _require(data: dict[str, Any], key: str) -> Any:
@@ -211,7 +221,7 @@ def prepare_preview(job: dict[str, Any], target: Path) -> tuple[dict[str, Any], 
     if target.exists():
         raise ValueError(f"preview already exists: {target}")
     with Image.open(source) as opened:
-        image = opened.convert("RGB")
+        image = _opaque_image(opened)
         draw = ImageDraw.Draw(image)
         rectangles = [
             _rectangle(item, image.width, image.height, index)
@@ -249,7 +259,7 @@ def _prepare_redaction(job: dict[str, Any]) -> tuple[dict[str, Any], bytes]:
         raise ValueError(f"output already exists: {output}")
     color = _color(job.get("color", [0, 0, 0]))
     with Image.open(source) as opened:
-        image = opened.convert("RGB")
+        image = _opaque_image(opened)
         rectangles = [
             _rectangle(item, image.width, image.height, index)
             for index, item in enumerate(_require(job, "rectangles"), 1)
@@ -281,6 +291,7 @@ def _prepare_redaction(job: dict[str, Any]) -> tuple[dict[str, Any], bytes]:
             }
     return {
         "metadata_review": metadata_review,
+        "transparency_matte": [255, 255, 255],
         "input": str(source),
         "output": str(output),
         "width": image.width,

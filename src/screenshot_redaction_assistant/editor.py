@@ -10,7 +10,7 @@ from typing import Any
 
 from PIL import Image
 
-from .core import _rectangle
+from .core import _opaque_image, _rectangle
 
 
 def render_editor(job: dict[str, Any]) -> str:
@@ -18,7 +18,7 @@ def render_editor(job: dict[str, Any]) -> str:
     with Image.open(io.BytesIO(source_bytes)) as opened:
         if opened.width * opened.height > 16_000_000:
             raise ValueError("editor is limited to 16 million pixels")
-        image = opened.convert("RGB")
+        image = _opaque_image(opened)
         rectangles = [
             _rectangle(r, image.width, image.height, i)
             for i, r in enumerate(job.get("rectangles", []), 1)
