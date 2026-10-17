@@ -1,5 +1,11 @@
 # Screenshot Redaction Assistant
 
+## Current release 1.3.0
+
+Save and restore unfinished local rectangle reviews without treating drafts as redacted deliverables.
+
+Generate an editor with `redact-screenshot job.json --editor review.html`. Save unfinished review draft works before all rectangles are accepted. Reopen an editor generated from the same exact source image, choose Restore review draft and continue reviewing. Drafts contain geometry, a source-file fingerprint and acceptance assertions; they contain no image pixels, but remain private and are never a redacted deliverable. A hash is identity evidence, not an authenticity signature: a deliberately edited draft can forge acceptance flags. Restoring a valid draft with unsaved changes requires explicit replacement confirmation. Imports are limited to 2 MiB/5,000 rectangles and reject unknown versions, wrong images, invalid bounds and non-boolean acceptance before changing state. Any source-byte change, even image metadata, requires a fresh review. No automatic browser storage or upload is added. Final PNG/recipe exports still require every rectangle accepted or removed.
+
 [![CI](https://github.com/loganpendragonmultiverse/screenshot-redaction-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/loganpendragonmultiverse/screenshot-redaction-assistant/actions/workflows/ci.yml)
 
 Redact screenshots locally into flattened PNG files with visual previews and detailed audit evidence. Version 1.1 supports one image, explicit job batches, recursive directories, reusable rectangle recipes, terminal review and correction, and optional local OCR suggestions for email addresses, phone-like text, IP addresses, and token-like strings.

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import io
 import json
 from importlib.resources import files
+from pathlib import Path
 from typing import Any
 
 from PIL import Image
@@ -12,7 +14,8 @@ from .core import _rectangle
 
 
 def render_editor(job: dict[str, Any]) -> str:
-    with Image.open(job["input"]) as opened:
+    source_bytes = Path(job["input"]).read_bytes()
+    with Image.open(io.BytesIO(source_bytes)) as opened:
         if opened.width * opened.height > 16_000_000:
             raise ValueError("editor is limited to 16 million pixels")
         image = opened.convert("RGB")
@@ -25,6 +28,8 @@ def render_editor(job: dict[str, Any]) -> str:
     data = {
         "image": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
         "rectangles": rectangles,
+        "source_sha256": hashlib.sha256(source_bytes).hexdigest(),
+        "reference_size": [image.width, image.height],
     }
     payload = (
         json.dumps(data, ensure_ascii=True)

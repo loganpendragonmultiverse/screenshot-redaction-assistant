@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0 - 2026-10-17
+
+- Reject fractional, boolean and string pixel bounds rather than silently coercing them.
+
+- Download explicit private review drafts containing bounds, selected rectangle and acceptance flags
+- Bind drafts to the exact original source image and dimensions, validating all data before replacing review state
+- Preserve pending-rectangle final-export guards and warn about unsaved edits
+- Reject oversized, malformed and mismatched-image drafts without altering the current review
+
 ## 1.2.0 - 2026-09-07
 
 - Add a local canvas editor with distinct original/preview/final states, guarded normalized recipes, exact union coverage and optional output metadata review.

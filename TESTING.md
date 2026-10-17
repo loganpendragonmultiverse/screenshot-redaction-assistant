@@ -7,3 +7,9 @@ Tests cover flattened pixels, replacement safety, detailed manifests, multi-job 
 ## 1.2.0 regression acceptance
 
 Run the complete existing suite plus the new regression fixtures. Confirm the documented command produces the selected output, malformed input remains actionable, and source files remain unchanged. Add a local canvas editor with distinct original/preview/final states, guarded normalized recipes, exact union coverage and optional output metadata review.
+
+## 1.3.0 acceptance
+
+Save and restore unfinished local rectangle reviews without treating drafts as redacted deliverables.
+
+Verify Download explicit private review drafts containing bounds, selected rectangle and acceptance flags; Bind drafts to the exact original source image and dimensions, validating all data before replacing review state; Preserve pending-rectangle final-export guards and warn about unsaved edits; Reject oversized, malformed and mismatched-image drafts without altering the current review. Run the full existing quality and build gates; release only through protected PR checks and verified tag artifacts.

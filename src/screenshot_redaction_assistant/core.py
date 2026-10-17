@@ -42,7 +42,9 @@ def _color(value: Any) -> tuple[int, int, int]:
 def _rectangle(raw: Any, width: int, height: int, index: int) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise TypeError("each rectangle must be an object")
-    box = tuple(int(_require(raw, key)) for key in ("left", "top", "right", "bottom"))
+    box = tuple(_require(raw, key) for key in ("left", "top", "right", "bottom"))
+    if any(not isinstance(value, int) or isinstance(value, bool) for value in box):
+        raise ValueError("rectangle bounds must be integers")
     if (
         box[0] < 0
         or box[1] < 0
