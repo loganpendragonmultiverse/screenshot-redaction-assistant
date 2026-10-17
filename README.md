@@ -13,7 +13,11 @@
 - Export the final image only after every rectangle has been accepted.
 
 
-## Current release 1.3.1
+## Current release 1.3.2
+
+Transparent images are composited against an opaque white matte before CLI redaction, previews or browser review/export. Fully transparent RGB content stays invisible; partially transparent pixels preserve their appearance over white. Audit reports record `transparency_matte: [255, 255, 255]`. Source bytes and the source-bound draft fingerprint remain unchanged. Final images still require inspection.
+
+## Output recovery in 1.3.1
 
 Batch images, previews and audit reports are staged together. Ordinary write or delivery failures remove only unchanged files created by the command, so a corrected destination can be retried. Existing files, dangling symlinks and concurrent replacements are preserved. Empty output directories may remain; this is not a power-loss transaction.
 

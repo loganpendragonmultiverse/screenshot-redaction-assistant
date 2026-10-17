@@ -17,3 +17,7 @@ Verify Download explicit private review drafts containing bounds, selected recta
 ## 1.3.1 recovery acceptance
 
 Verify multi-image validation, preview/image/report destination collisions, missing and unwritable report destinations, staging failures, reservation races, partial writes, concurrent replacement/edit preservation, stdout failure and successful retry. Decode flattened PNGs and verify manifest hashes and source bytes. Run installed-wheel acceptance as well as the full source gates.
+
+## 1.3.2 alpha-safe flattening
+
+Composite RGBA and palette transparency against opaque white before rendering previews, final PNGs and browser editor pixels. Verify hidden RGB cannot become visible, partial alpha matches the documented matte, editor/CLI pixels agree, metadata is dropped and source bytes/fingerprints remain unchanged. Run source gates and actual tagged-wheel/browser acceptance before publishing.

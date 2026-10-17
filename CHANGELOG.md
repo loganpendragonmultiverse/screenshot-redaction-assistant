@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.2
+
+- Composite transparent pixels against an explicit white matte before preview, redaction and browser review/export, preventing hidden RGB channels from becoming visible.
+- Preserve exact source hashes, metadata-free final images and ordinary export recovery.
+
 ## 1.3.1
 
 - Stage and exclusively reserve all batch images, previews and audit outputs.

@@ -27,3 +27,7 @@ Stage all PNGs, previews and the optional audit before reserving destination nam
 The published v1.3.1 closes the identified ordinary output-failure/retry gap within the original local screenshot review and flattened-export purpose. The exact tagged wheel passed all 41 regression/acceptance tests without skips, including non-admin image, preview and audit destination failures followed by retries. Protected platform CI and CodeQL passed on the reviewed PR and merged release commit. Fresh Chromium, Firefox and WebKit checks passed review-draft restore, pending-export guards, accepted PNG/recipe exports and decoded final pixels. Public wheel, source distribution and checksum assets match their verified digests.
 
 No identified meaningful feature remains unfinished within the documented purpose. OCR remains an optional suggestion requiring operator review; final images still require inspection. Maintenance, future compatibility and useful new ideas remain welcome. Output recovery covers ordinary errors and is not a power-loss transaction or a guarantee against hostile filesystem mutation.
+
+## 1.3.2 alpha-safe flattening
+
+Composite RGBA and palette transparency against opaque white before rendering previews, final PNGs and browser editor pixels. Verify hidden RGB cannot become visible, partial alpha matches the documented matte, editor/CLI pixels agree, metadata is dropped and source bytes/fingerprints remain unchanged. Run source gates and actual tagged-wheel/browser acceptance before publishing.
