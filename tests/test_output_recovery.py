@@ -225,18 +225,16 @@ def test_dangling_symlink_is_preserved(tmp_path):
     assert target.is_symlink() and not (tmp_path / "absent").exists()
 
 
-def test_replaced_file_preserved_on_rollback(tmp_path, monkeypatch):
+def test_replaced_file_preserved_on_rollback(tmp_path):
     pair = [(tmp_path / "one", b"one"), (tmp_path / "two", b"two")]
-    original = output._write_final
 
-    def replace(item):
-        if item.path == pair[1][0]:
-            pair[0][0].unlink()
-            pair[0][0].mkdir()
-            raise OSError("synthetic")
-        original(item)
+    def replace():
+        # Delivery occurs after descriptors close, so replacement is possible
+        # on Windows as well as POSIX systems.
+        pair[0][0].unlink()
+        pair[0][0].mkdir()
+        raise OSError("synthetic")
 
-    monkeypatch.setattr(output, "_write_final", replace)
     with pytest.raises(OSError, match="kept changed"):
-        output.write_new_outputs(pair)
+        output.write_new_outputs(pair, deliver=replace)
     assert pair[0][0].is_dir() and not pair[1][0].exists()
