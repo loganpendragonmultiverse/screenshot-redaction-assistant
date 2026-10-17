@@ -13,3 +13,7 @@ Run the complete existing suite plus the new regression fixtures. Confirm the do
 Save and restore unfinished local rectangle reviews without treating drafts as redacted deliverables.
 
 Verify Download explicit private review drafts containing bounds, selected rectangle and acceptance flags; Bind drafts to the exact original source image and dimensions, validating all data before replacing review state; Preserve pending-rectangle final-export guards and warn about unsaved edits; Reject oversized, malformed and mismatched-image drafts without altering the current review. Run the full existing quality and build gates; release only through protected PR checks and verified tag artifacts.
+
+## 1.3.1 recovery acceptance
+
+Verify multi-image validation, preview/image/report destination collisions, missing and unwritable report destinations, staging failures, reservation races, partial writes, concurrent replacement/edit preservation, stdout failure and successful retry. Decode flattened PNGs and verify manifest hashes and source bytes. Run installed-wheel acceptance as well as the full source gates.

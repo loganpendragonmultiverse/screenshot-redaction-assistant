@@ -18,10 +18,6 @@ Save and restore unfinished local rectangle reviews without treating drafts as r
 
 Generate an editor with `redact-screenshot job.json --editor review.html`. Save unfinished review draft works before all rectangles are accepted. Reopen an editor generated from the same exact source image, choose Restore review draft and continue reviewing. Drafts contain geometry, a source-file fingerprint and acceptance assertions; they contain no image pixels, but remain private and are never a redacted deliverable. A hash is identity evidence, not an authenticity signature: a deliberately edited draft can forge acceptance flags. Restoring a valid draft with unsaved changes requires explicit replacement confirmation. Imports are limited to 2 MiB/5,000 rectangles and reject unknown versions, wrong images, invalid bounds and non-boolean acceptance before changing state. Any source-byte change, even image metadata, requires a fresh review. No automatic browser storage or upload is added. Final PNG/recipe exports still require every rectangle accepted or removed.
 
-## Gold Star review — October 17, 2026
+## 1.3.1 output recovery
 
-Cover private details in screenshots, review each redaction and save a flattened image.
-
-Logan considers this project complete. Continue fixes and maintenance, and consider good new ideas. The catalog records the reviewed release.
-
-Definition: https://www.loganpendragonforge.com/open-source/?gold=1
+Gold qualification is pending verified output recovery. Stage all PNGs, previews and the optional audit before reserving destination names exclusively. Roll back only unchanged files created by this command; preserve existing and concurrent files. Do not promise power-loss atomicity.
